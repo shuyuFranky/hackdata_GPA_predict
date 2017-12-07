@@ -1,3 +1,4 @@
+# -8- coding: utf8 -*-
 from sklearn.model_selection import train_test_split
 import xgboost as xgb
 import numpy as np
@@ -17,25 +18,25 @@ test_size=0.33, random_state=5)
 #print(X_train.shape, X_test.shape)
 
 #模型参数设置
-xlf = xgb.XGBRegressor(max_depth=10, 
-                        learning_rate=0.1, 
-                        n_estimators=10, 
-                        silent=True, 
-                        objective='reg:linear', 
-                        nthread=-1, 
+xlf = xgb.XGBRegressor(max_depth=100,
+                        learning_rate=0.1,
+                        n_estimators=100,
+                        silent=True,
+                        objective='reg:linear',
+                        nthread=-1,
                         gamma=0,
-                        min_child_weight=1, 
-                        max_delta_step=0, 
-                        subsample=0.85, 
-                        colsample_bytree=0.7, 
-                        colsample_bylevel=1, 
-                        reg_alpha=0, 
-                        reg_lambda=1, 
-                        scale_pos_weight=1, 
-                        seed=1440, 
+                        min_child_weight=1,
+                        max_delta_step=0,
+                        subsample=0.85,
+                        colsample_bytree=0.7,
+                        colsample_bylevel=1,
+                        reg_alpha=0,
+                        reg_lambda=1,
+                        scale_pos_weight=1,
+                        seed=1440,
                         missing=None)
 
-xlf.fit(X_train, y_train, eval_metric='rmse', verbose = True, eval_set = [(X_test, y_test)],early_stopping_rounds=100)
+xlf.fit(X_train, Y_train, eval_metric='rmse', verbose = True, eval_set = [(X_test, Y_test)], early_stopping_rounds=1000)
 
 # 计算 auc 分数、预测
 preds = xlf.predict(X_test)
