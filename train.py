@@ -13,9 +13,9 @@ if __name__ == '__main__':
     #fh = open("./static/data.cpk", "r")
     #data = cpk.load(fh)
     #fh.close()
-    data_ = data.fillna(0)
-    GPA_y = data_[u'综合GPA']
-    GPA_x = data_
+    # data = data.fillna(0)
+    GPA_y = data[u'综合GPA']
+    GPA_x = data
     GPA_x.pop(u'综合GPA')
     # lm = LinearRegression()
     # lm.fit(GPA_x, GPA_y)
@@ -23,15 +23,15 @@ if __name__ == '__main__':
     test_size=0.33, random_state=5)
 
 
-    #lm = LinearRegression()
-    lm = LinearSVR()
+    lm = LinearRegression()
+    # lm = LinearSVR()
     
     
     lm.fit(X_train, Y_train)
     pred_train = lm.predict(X_train)
     pred_test = lm.predict(X_test)
-    print "训练误差为：", np.mean((Y_train - lm.predict(X_train)) ** 2)
-    print "测试误差为：", np.mean((Y_test - lm.predict(X_test)) ** 2)
+    print ("训练误差为：%.6f" % np.mean((Y_train - lm.predict(X_train)) ** 2))
+    print ("测试误差为：%.6f" % np.mean((Y_test - lm.predict(X_test)) ** 2))
 
     # test
     # test_data = pd.read_excel("./static/data_test.xlsx")
