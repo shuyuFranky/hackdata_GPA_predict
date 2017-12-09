@@ -39,60 +39,38 @@ def intersect(l_1, l_2):
     return list(set(l_1) & set(l_2))
 
 
-def get_features(train, test):
-    intersecting_features = intersect(train.columns, test.columns)
-    intersecting_features.remove('people_id')
-    intersecting_features.remove('activity_id')
-    return sorted(intersecting_features)
-
 #-------------------------------------------------#
 
 # Scoring and optimization functions
-
-
-def get_model():
-    xlf = xgb.XGBRegressor(max_depth=10,
-                        learning_rate=0.1,
-                        n_estimators=250,
-                        silent=True,
-                        objective='reg:linear',
-                        nthread=-1,
-                        gamma=2.0,
-                        min_child_weight=1,
-                        max_delta_step=0,
-                        subsample=0.85,
-                        colsample_bytree=0.7,
-                        colsample_bylevel=1,
-                        reg_alpha=0,
-                        reg_lambda=1,
-                        scale_pos_weight=1,
-                        seed=1440,
-                        missing=None)
-    return xlf
-
-
 def score(params):
     print("Training with params: ")
     print(params)
-    num_round = int(params['n_estimators'])
-    del params['n_estimators']
-    dtrain = xgb.DMatrix(train_features, label=y_train)
-    dvalid = xgb.DMatrix(valid_features, label=y_valid)
-    watchlist = [(dvalid, 'eval'), (dtrain, 'train')]
-    gbm_model = base_model.fit(params, dtrain, num_round,
-                          evals=watchlist,
-                          verbose_eval=True)
-    predictions = gbm_model.predict(dvalid,
-                                    ntree_limit=gbm_model.best_iteration + 1)
+
+    xlf = xgb.XGBRegressor(max_depth=params['max_depth'],
+                    learning_rate=0.1,
+                    n_estimators=params['n_estimators'],
+                    silent=True,
+                    objective='reg:linear',
+                    eval_metric='rmse',
+                    nthread=4,
+                    gamma=params['gamma'],
+                    min_child_weight=params['min_child_weight'],
+                    max_delta_step=0,
+                    subsample=params['subsample'],
+                    colsample_bytree=params['colsample_bytree'],
+                    colsample_bylevel=1,
+                    reg_alpha=0,
+                    reg_lambda=1,
+                    scale_pos_weight=1,
+                    seed=random_state,
+                    missing=None)
+
+    xlf.fit(train_features, y_train, eval_metric='rmse', verbose = True, eval_set = [(valid_features, y_valid)], early_stopping_rounds=1000)
+
+    predictions = xlf.predict(dvalid, ntree_limit=xlf.best_iteration + 1)
     loss = np.mean((y_valid - predictions) ** 2)
     print ("测试误差为：%.6f" % loss)
-    # score = roc_auc_score(y_valid, predictions)
-    # TODO: Add the importance for the selected features
-    # print("\tScore {0}\n\n".format(score))
-    # The score function should return the loss (1-score)
-    # since the optimize function looks for the minimum
-    # loss = 1 - score
-    return {'loss': loss, 'status': STATUS_OK}
+    return loss
 
 
 def optimize(
@@ -107,8 +85,6 @@ def optimize(
     space = {
         'n_estimators': hp.quniform('n_estimators', 100, 1000, 1),
         'eta': hp.quniform('eta', 0.025, 0.5, 0.025),
-        # A problem with max_depth casted to float instead of int with
-        # the hp.quniform method.
         'max_depth':  hp.choice('max_depth', np.arange(1, 14, dtype=int)),
         'min_child_weight': hp.quniform('min_child_weight', 1, 6, 1),
         'subsample': hp.quniform('subsample', 0.5, 1, 0.05),
@@ -116,8 +92,6 @@ def optimize(
         'colsample_bytree': hp.quniform('colsample_bytree', 0.5, 1, 0.05),
         'eval_metric': 'rmse',
         'objective': 'reg:linear',
-        # Increase this number if you have more cores. Otherwise, remove it and it will default
-        # to the maxium number.
         'nthread': 4,
         'booster': 'gbtree',
         'tree_method': 'exact',
@@ -147,24 +121,18 @@ GPA_y = data[u'综合GPA']
 GPA_x = data
 GPA_x.pop(u'综合GPA')
 
-
 #-------------------------------------------------#
 
 
 
 # Extract the train and valid (used for validation) dataframes from the train_df
-
-train, valid = train_test_split(data, test_size=VALID_SIZE,
-                                random_state=SEED)
 train_features, valid_features, y_train, y_valid = train_test_split(
     GPA_x, GPA_y,
     test_size=VALID_SIZE,
     random_state=SEED)
 
-base_model = get_model()
-
-print('The training set is of length: ', len(train.index))
-print('The validation set is of length: ', len(valid.index))
+print('The training set is of length: ', len(y_train.index))
+print('The validation set is of length: ', len(y_valid.index))
 
 #-------------------------------------------------#
 
