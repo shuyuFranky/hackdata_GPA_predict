@@ -19,6 +19,7 @@ import numpy as np
 import xgboost as xgb
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import cross_val_predict
 
 # Hyperparameters tuning
 
@@ -83,12 +84,14 @@ def score(params):
                           verbose_eval=True)
     predictions = gbm_model.predict(dvalid,
                                     ntree_limit=gbm_model.best_iteration + 1)
-    score = roc_auc_score(y_valid, predictions)
+    loss = np.mean((y_valid - predictions) ** 2)
+    print ("测试误差为：%.6f" % loss)
+    # score = roc_auc_score(y_valid, predictions)
     # TODO: Add the importance for the selected features
-    print("\tScore {0}\n\n".format(score))
+    # print("\tScore {0}\n\n".format(score))
     # The score function should return the loss (1-score)
     # since the optimize function looks for the minimum
-    loss = 1 - score
+    # loss = 1 - score
     return {'loss': loss, 'status': STATUS_OK}
 
 
@@ -111,8 +114,8 @@ def optimize(
         'subsample': hp.quniform('subsample', 0.5, 1, 0.05),
         'gamma': hp.quniform('gamma', 0.5, 1, 0.05),
         'colsample_bytree': hp.quniform('colsample_bytree', 0.5, 1, 0.05),
-        'eval_metric': 'auc',
-        'objective': 'binary:logistic',
+        'eval_metric': 'rmse',
+        'objective': 'reg:linear',
         # Increase this number if you have more cores. Otherwise, remove it and it will default
         # to the maxium number.
         'nthread': 4,

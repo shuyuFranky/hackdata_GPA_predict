@@ -9,13 +9,11 @@ from hyperopt import hp
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 
 import sys
-# The path to XGBoost wrappers goes here
-sys.path.append('C:\\Users\\Amine\\Documents\\GitHub\\xgboost\\wrapper')
 import xgboost as xgb
 
 
 def load_train():
-    train = pd.read_csv('../data/train.csv')
+    train = pd.read_excel('./static/data_train.csv')
     labels = train.target.values
     lbl_enc = preprocessing.LabelEncoder()
     labels = lbl_enc.fit_transform(labels)
