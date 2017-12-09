@@ -33,11 +33,18 @@ def drop_feature(data, feature_select=None):
 def mean_z_score_group_by_kv(data, v, key):
     print("Calc the mean and std grouped by %s, and normlize the value %s." % (key, v))
     data = mean_fill_missing(data, v, key)
-    v_mean = data.groupby(by=[key])[v].mean()
-    v_std = data.groupby(by=[key])[v].std()
-    val = (data[v].values - v_mean[data[key]].values) / v_std[data[key]].values
+    v_mean = data.groupby(by=key)[v].mean()
+    v_std = data.groupby(by=key)[v].std()
+    val = []
+    if len(key) == 2:
+        for i in range(len(data.index)):
+            score = data.iloc[i][v] - v_mean[data.iloc[i][key[0]]][data.iloc[i][key[1]]]
+            mean_score = score / v_std[data.iloc[i][key[0]]][data.iloc[i][key[1]]]
+            val.append(mean_score)
+    else:
+        val = (data[v].values - v_mean[data[key[0]]].values) / v_std[data[key[0]]].values
     data[v] = val
-    data.pop(key)
+    data.pop(u'省市')
     return data
 
 
@@ -143,7 +150,8 @@ def preprocess_factory(data, v):
     config_key = {
         #u'优惠加分': None,
         u'优惠加分': u'大类',
-        u'投档成绩': u'省市',
+        # u'投档成绩': [u'年份', u'省市'],
+        u'投档成绩': [u'省市'],
         u'大类': None,
         u'高三排名': None,
         u'成绩方差': None,
@@ -199,11 +207,11 @@ def process_test(feature_list, feature_to_preprocess):
 
 if __name__ == '__main__':
     feature_list = [
-        u'综合GPA', 
+        u'综合GPA',
         u'省市', 
+        u'年份', 
         u'性别', 
         u'出生日期',
-        u'年份', 
         u'投档成绩', 
         u'优惠加分', 
         u'高三排名', 
@@ -215,7 +223,6 @@ if __name__ == '__main__':
         u'大类']
     feature_to_preprocess = [
         u'性别', 
-        u'出生日期', 
         u'投档成绩', 
         u'优惠加分', 
         u'高三排名', 
@@ -224,6 +231,7 @@ if __name__ == '__main__':
         u'获奖数',
         u'院系', 
         u'竞赛成绩', 
+        u'出生日期', 
         u'大类']
     feature_list_test = [
         u'省市', 
@@ -241,7 +249,6 @@ if __name__ == '__main__':
         u'大类']
     feature_to_preprocess_test = [
         u'性别', 
-        u'出生日期', 
         u'投档成绩', 
         u'优惠加分', 
         u'高三排名', 
@@ -250,6 +257,7 @@ if __name__ == '__main__':
         u'获奖数',
         u'院系', 
         u'竞赛成绩', 
+        u'出生日期', 
         u'大类']
     mode = sys.argv[1]
     if mode == 'train':

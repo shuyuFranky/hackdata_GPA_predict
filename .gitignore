@@ -5,3 +5,4 @@ data
 *.cpk
 *.csv
 *.xlsx
+static/*
