@@ -2,3 +2,6 @@
 static
 data
 *.pyc
+*.cpk
+*.csv
+*.xlsx
